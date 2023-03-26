@@ -15,19 +15,20 @@ const postSchema = new Schema({
     photo:{
         type:String,
     },
+    comments:[{
+        type:Schema.Types.ObjectId,
+        ref:"Comment",
+    }],
+
     createdBy: {
         type: Schema.Types.ObjectId,
         ref: "User",
         required: true,
     },
-    meat: {
-        like: {
-            type: Number,
-            default: 0,
-            required: true,
-            min: 0,
-        },
-    },
+    likes: [{
+        type:Schema.Types.ObjectId,
+        ref:'User',
+    }],
 }, {
     timestamps: true,
 });

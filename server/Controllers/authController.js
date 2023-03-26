@@ -85,13 +85,15 @@ module.exports.register = async (req, res) => {
                 rejectUnauthorized: false
             }
         });
-
         const mailOptions = {
             from: 'nathanim2tadele@gmail.com',
             to: email,
             subject: 'Registration Successful',
-            text: `Dear ${name},\n\nThank you for registering on our website. 
-            Your account has been created successfully.\n\nRegards,\nYour Website Team`
+            html: `<p>Dear ${name},</p>
+            <p>Thank you for registering on our website. Your account has been created successfully.</p>
+            <p>Please <a href="http://localhost:3000/">click here</a> to go to our website.</p>
+            <p>Regards,</p>
+            <p>Your Website Team</p>`
         };
 
         transporter.sendMail(mailOptions, (error, info) => {

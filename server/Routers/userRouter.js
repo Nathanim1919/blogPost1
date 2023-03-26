@@ -4,13 +4,15 @@ const router = express.Router();
 const {
     getUser,
     alluser,
-    updateUser,
+    updateFollowing,
+    updateFollowers
 } = require('../Controllers/userController')
 
 
 router.get('/', alluser)
 router.get('/:id',getUser)
-router.put('/:id/update',updateUser)
+router.put('/:id/updateFollowing', updateFollowing)
+router.put('/:id/updateFollowers', updateFollowers)
 // router.get('/:userid/posts/:post_id', async (req, res) => {
 //     res.send('login page');
 // })

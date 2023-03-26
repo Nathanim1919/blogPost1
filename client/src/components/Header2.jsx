@@ -2,20 +2,19 @@ import React, { useEffect, useState } from "react";
 import { FaBlog } from "react-icons/fa";
 import styled from "styled-components";
 import { IoMdNotificationsOutline } from "react-icons/io";
-import { NavLink, useNavigate,useParams} from "react-router-dom";
-import {GrUserSettings} from 'react-icons/gr'
-import {CgProfile} from 'react-icons/cg'
-import {AiOutlineLogout} from 'react-icons/ai' 
+import { NavLink, useNavigate, useParams } from "react-router-dom";
+import { GrUserSettings } from "react-icons/gr";
+import { CgProfile } from "react-icons/cg";
+import { AiOutlineLogout } from "react-icons/ai";
 
 export default function (props) {
+  const [option, setOption] = useState(false);
+  const navigate = useNavigate();
 
-  const [option, setOption] = useState(false)
-  const navigate = useNavigate()
-
- const logout = () => {
-   document.cookie = "jwt=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-   window.location.href = "/login";
- };
+  const logout = () => {
+    document.cookie = "jwt=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    window.location.href = "/login";
+  };
 
   return (
     <>
@@ -57,7 +56,12 @@ export default function (props) {
                 <CgProfile />
                 Profile
               </NavLink>
-              <NavLink onClick={() => {setOption(!option); logout();}}>
+              <NavLink
+                onClick={() => {
+                  setOption(!option);
+                  logout();
+                }}
+              >
                 <AiOutlineLogout />
                 Log Out
               </NavLink>
@@ -84,11 +88,11 @@ const Setting = styled.div`
     display: flex;
     flex-direction: column;
     gap: 1rem;
-    >*{
+    > * {
       margin: 0;
     }
 
-    >div{
+    > div {
       display: flex;
       align-items: center;
       margin-top: 0;
@@ -96,30 +100,28 @@ const Setting = styled.div`
       border-bottom: 1px solid #eee;
       padding: 0 1rem;
     }
-    >ul{
+    > ul {
       display: flex;
       flex-direction: column;
-      gap: .4rem;
+      gap: 0.4rem;
 
-      >a{
+      > a {
         display: grid;
-        grid-template-columns: .5fr 1fr;
+        grid-template-columns: 0.5fr 1fr;
         color: #4e4c4c;
         place-items: start;
         margin-left: -2.5rem;
         text-decoration: none;
-        font-size: .8rem;
-        padding: .41rem;
-        &:hover{
+        font-size: 0.8rem;
+        padding: 0.41rem;
+        &:hover {
           background-color: #eee;
         }
       }
     }
   }
 `;
-const Icons = styled.div`
-  
-`
+const Icons = styled.div``;
 const Profile = styled.div`
   display: flex;
   justify-content: center;
@@ -140,8 +142,8 @@ const Userprofile = styled.div`
     border-radius: 50%;
     overflow: hidden;
 
-    img{
-      width:100%;
+    img {
+      width: 100%;
     }
   }
   > div:nth-child(2) {
@@ -156,7 +158,7 @@ const Headere = styled.div`
   border-bottom: 1px solid #fffdfd;
   margin: 0;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.01);
-  padding: .4rem;
+  padding: 0.4rem;
 
   nav div:nth-child(1) {
     font-size: 2rem;

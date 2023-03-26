@@ -17,6 +17,7 @@ export default function () {
   const [isBox, setIsBox] = useState(false);
   const [addComment, setAddComment] = useState(false);
   const [currentPostId, setCurrentPostId] = useState(null);
+  const [commentBody, setCommentBody] = useState("");
   const { id } = useParams();
 
   useEffect(() => {
@@ -42,32 +43,69 @@ export default function () {
     return user.following.some((u) => u._id === us._id);
   };
 
-const followUser = async (us) => {
-  const isAlreadyFollowing = isFollowing(us);
-  const isNotCurrentUser = us._id !== user._id;
+  const followUser = async (us) => {
+    const isAlreadyFollowing = isFollowing(us);
+    const isNotCurrentUser = us._id !== user._id;
 
-  if (!isAlreadyFollowing && isNotCurrentUser) {
-    user.following.push(us);
-    us.followers.push(user);
-  } else if (isAlreadyFollowing && isNotCurrentUser) {
-    user.following = user.following.filter(
-      (followedUser) => followedUser._id !== us._id
-    );
-    us.followers = us.followers.filter(
-      (followedUser) => followedUser._id !== user._id
-    );
+    if (!isAlreadyFollowing && isNotCurrentUser) {
+      user.following.push(us);
+      us.followers.push(user);
+    } else if (isAlreadyFollowing && isNotCurrentUser) {
+      user.following = user.following.filter(
+        (followedUser) => followedUser._id !== us._id
+      );
+      us.followers = us.followers.filter(
+        (followedUser) => followedUser._id !== user._id
+      );
+    }
+
+    // Create a copy of the us object without the following property
+    const usCopy = { ...us };
+    delete usCopy.following;
+
+    const [updatedUser, updatedFollowedUser] = await Promise.all([
+      axios.put(`http://localhost:5000/user/${user._id}/updateFollowing`, {
+        following: user.following,
+      }),
+      axios.put(`http://localhost:5000/user/${us._id}/updateFollowers`, {
+        followers: usCopy.followers,
+      }),
+    ]);
+  };
+
+  const handleCommentSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const comment = await axios.post(`http://localhost:5000/posts/comment`, {
+        commentBody,
+        id,
+        currentPostId,
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  function handleLike(post, user) {
+    const hasLiked = post.likes.some((like) => like._id === user._id);
+    console.log(hasLiked);
+    if (hasLiked) {
+      post.likes = post.likes.filter((like) => like._id !== user._id);
+    } else {
+      post.likes.push(user);
+    }
+
+    axios
+      .put(`http://localhost:5000/posts/${post._id}/liked`, {
+        likes: post.likes,
+      })
+      .then((response) => {
+        console.log(response.data);
+      })
+      .catch((error) => {
+        console.log(error);
+      });
   }
-
-  const [updatedUser, updatedFollowedUser] = await Promise.all([
-    axios.put(`http://localhost:5000/user/${user._id}/update`, {
-      following: user.following,
-    }),
-    axios.put(`http://localhost:5000/user/${us._id}/update`, {
-      followers: us.followers,
-    }),
-  ]);
-};
-
 
   return (
     <>
@@ -125,23 +163,33 @@ const followUser = async (us) => {
                     </div>
                   </PostInfo>
                   <NumberofLikes>
-                    <h4>12 likes</h4>
-                    <h4>12 Comments</h4>
+                    <h4>{post.likes.length} likes</h4>
+                    <h4>{post.comments.length} Comments</h4>
                   </NumberofLikes>
+
+                  <Comments>
+                    {post.comments.map((c) => {
+                      <p>c.</p>;
+                    })}
+                  </Comments>
 
                   {currentPostId === post._id && (
                     <AddComment>
                       <ProfileImages>
                         <img src={user.profile} alt="" />
                       </ProfileImages>
-                      <form action="" method="post">
-                        <input type="text" placeholder="Add comment..." />
+                      <form onSubmit={handleCommentSubmit}>
+                        <input
+                          onChange={(e) => setCommentBody(e.target.value)}
+                          type="text"
+                          placeholder="Add comment..."
+                        />
                         <button type="submit">post</button>
                       </form>
                     </AddComment>
                   )}
                   <Likes>
-                    <NavLink>
+                    <NavLink onClick={() => handleLike(post, user)}>
                       <AiOutlineLike />
                     </NavLink>
                     <NavLink
@@ -187,6 +235,12 @@ const followUser = async (us) => {
     </>
   );
 }
+
+const Comments = styled.div`
+    padding:2rem;
+    background-color: red;
+    color:white;
+`
 
 const AllUser = styled.div`
   height: 70vh;

@@ -3,7 +3,8 @@ const {
 } = require('../Models/user');
 const {
     Post
-} = require('../Models/post')
+} = require('../Models/post');
+const { Comment } = require('../Models/comment');
 
 module.exports.addPost = async (req, res) => {
     try {
@@ -48,60 +49,75 @@ module.exports.addPost = async (req, res) => {
 };
 
 
-module.exports.updateUsers = async (req, res) => {
+module.exports.updateLikes = async (req, res) => {
     try {
         const {
             id
         } = req.params;
         const {
-            following,
-            followers
+            likes
         } = req.body;
 
-        const user = await User.findById(id);
-        const userToFollow = await User.findById(following);
+        const updatedPost = await Post.findById(id);
+        updatedPost.likes = likes;
+       
 
-        if (user && userToFollow) {
-            const isAlreadyFollowing = user.following.includes(following);
-            const isNotCurrentUser = following !== user._id.toString();
+        await updatedPost.save();
 
-            if (!isAlreadyFollowing && isNotCurrentUser) {
-                user.following.push(following);
-                userToFollow.followers.push(id);
-            } else if (isAlreadyFollowing && isNotCurrentUser) {
-                user.following = user.following.filter(
-                    (followedUser) => followedUser.toString() !== following
-                );
-                userToFollow.followers = userToFollow.followers.filter(
-                    (followedUser) => followedUser.toString() !== id
-                );
-            }
-
-            await user.save();
-            await userToFollow.save();
-
-            res.status(200).json({
-                message: 'Users updated successfully'
-            });
-        } else {
-            res.status(404).json({
-                message: 'User not found'
-            });
-        }
+        res.json(updatedPost);
     } catch (error) {
         console.error(error);
-        res.status(500).json({
-            message: 'Server error'
-        });
+        res.status(500).send("Error updating post array");
     }
+};
+
+module.exports.updateFollowing = async (req, res) => {
+     try {
+         const {id} = req.params;
+         const {following} = req.body;
+
+         const updatedUser = await User.findByIdAndUpdate(
+             id, {
+                 following
+             }, {
+                 new: true
+             }
+         );
+
+         res.json(updatedUser);
+     } catch (error) {
+         console.error(error);
+         res.status(500).send("Error updating user's following array");
+     }
+};
+module.exports.updateFollowers = async (req, res) => {
+      try {
+          const {id} = req.params;
+          const {followers} = req.body;
+
+          const updatedUser = await User.findByIdAndUpdate(
+              id, {
+                  followers
+              }, {
+                  new: true
+              }
+          );
+
+          res.json(updatedUser);
+      } catch (error) {
+          console.error(error);
+          res.status(500).send("Error updating user's followers array");
+      }
 };
 
 
 
 module.exports.alluser = async (req, res) => {
     try {
-        const users = await User.find();
-        // console.log(posts)
+        const users = await User.find()
+            .populate('blogPosts')
+            .populate('followers')
+            .populate('following');
          res.status(200).json(users); // Return the user object as JSON
     } catch (error) {
         console.error(error);
@@ -112,8 +128,10 @@ module.exports.alluser = async (req, res) => {
 };
 module.exports.allpost = async (req, res) => {
     try {
-        const posts = await Post.find().populate('createdBy');
-        // console.log(posts)
+        const posts = await Post.find()
+        .populate('createdBy')
+        .populate("likes")
+        .populate("comments");
          res.status(200).json(posts); // Return the user object as JSON
     } catch (error) {
         console.error(error);
@@ -142,3 +160,39 @@ module.exports.getUser = async (req, res) => {
         }); // Return 500 error if there's a server error
     }
 };
+
+module.exports.addComment = async (req, res) => {
+    try {
+        const {
+            commentBody,
+            id,
+            currentPostId
+        } = req.body;
+
+         const post = await Post.findById(currentPostId);
+
+         if (!post) {
+             return res.status(404).send({
+                 error: 'post not found'
+             });
+         }
+
+        const comment = await Comment.create({
+            body: commentBody,
+            post: currentPostId,
+            user:id,
+        });
+
+        await comment.save();
+
+        post.comments.push(comment._id);
+        await post.save();
+
+        res.status(201).json({
+            message:"comment added successfully"
+        })
+
+    } catch (error) {
+        
+    }
+}
