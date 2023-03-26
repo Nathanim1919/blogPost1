@@ -18,6 +18,7 @@ export default function () {
   const [addComment, setAddComment] = useState(false);
   const [currentPostId, setCurrentPostId] = useState(null);
   const [commentBody, setCommentBody] = useState("");
+  const [openComments, setOpenComments] = useState(false)
   const { id } = useParams();
 
   useEffect(() => {
@@ -81,6 +82,7 @@ export default function () {
         id,
         currentPostId,
       });
+      setAddComment(false);
     } catch (error) {
       console.log(error);
     }
@@ -164,16 +166,27 @@ export default function () {
                   </PostInfo>
                   <NumberofLikes>
                     <h4>{post.likes.length} likes</h4>
-                    <h4>{post.comments.length} Comments</h4>
+                    <h4
+                      onClick={() => {
+                        setOpenComments(!openComments);
+                        setCurrentPostId(post._id);
+                      }}
+                    >
+                      {post.comments.length} Comments
+                    </h4>
                   </NumberofLikes>
+                  {currentPostId === post._id && openComments && (
+                    <Comments>
+                      {post.comments.map((comment) => (
+                        <div>
+                          <p>{comment.body}</p>
+                          {/* <p>{comment.user.name}</p> */}
+                        </div>
+                      ))}
+                    </Comments>
+                  )}
 
-                  <Comments>
-                    {post.comments.map((c) => {
-                      <p>c.</p>;
-                    })}
-                  </Comments>
-
-                  {currentPostId === post._id && (
+                  {currentPostId === post._id && addComment && (
                     <AddComment>
                       <ProfileImages>
                         <img src={user.profile} alt="" />
@@ -188,6 +201,7 @@ export default function () {
                       </form>
                     </AddComment>
                   )}
+
                   <Likes>
                     <NavLink onClick={() => handleLike(post, user)}>
                       <AiOutlineLike />
@@ -238,8 +252,17 @@ export default function () {
 
 const Comments = styled.div`
     padding:2rem;
-    background-color: red;
-    color:white;
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+    background-color: #fffafa;
+    >div{
+      padding: 0.1rem 1rem;
+      box-shadow: 0 5px 12px rgba(0, 0, 0,.1);
+      background-color: #e6e1e1;
+      color: #333;
+      border-radius: 20px;
+    }
 `
 
 const AllUser = styled.div`
@@ -357,6 +380,10 @@ const PostInfo = styled.div`
   flex-direction: column;
   > div {
     padding: 1rem;
+
+    >*{
+      margin: 0;
+    }
   }
   > * {
     margin: 0;
@@ -428,6 +455,12 @@ const NumberofLikes = styled.div`
   align-items: center;
   padding: 0.005rem 1rem;
   border-bottom: 1px solid #eee;
+
+  >*{
+    font-size: .8rem;
+    cursor: pointer;
+    color: #3b3a3a;
+  }
 `;
 
 const Likes = styled.div`

@@ -84,8 +84,7 @@ const Container = styled.div`
   left: 50%;
   transform: translate(-50%, -50%);
   padding: 2rem;
-  box-shadow: 0 8px 17px rgba(0, 0, 0, 0.1), 0 8px 17px rgba(0, 0, 0, 0.1),
-    0 8px 17px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 17px rgba(0, 0, 0, 0.1);
   border-radius: 10px;
   backdrop-filter: blur(5px);
 
