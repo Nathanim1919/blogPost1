@@ -2,9 +2,11 @@ import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import axios from "axios";
 import { useParams, NavLink } from "react-router-dom";
+import Loading from "../components/Loading";
 
 export default function ProfilePage() {
   const [user, setUser] = useState({});
+  const [isLoading, setIsLoading] = useState(true)
   const { id } = useParams();
 
   useEffect(() => {
@@ -12,6 +14,7 @@ export default function ProfilePage() {
       const Singleuser = await axios.get(`http://localhost:5000/user/${id}`);
       console.log("data loading...");
       setUser(Singleuser.data);
+      setIsLoading(false)
     };
     getUser();
   }, [id]);
@@ -19,6 +22,7 @@ export default function ProfilePage() {
   console.log(user.blogPosts);
 
   return (
+    isLoading? <Loading/>:
     <div>
       <CoverImage>
         <img src={user.profile} alt="" />

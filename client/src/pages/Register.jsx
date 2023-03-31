@@ -108,24 +108,28 @@ export default function Login() {
               onChange={(e) => setProfile(e.target.files[0])}
             />
             <input
+              name="name"
               type="text"
               id="name"
               placeholder="Name"
               onChange={(e) => setName(e.target.value)}
             />
             <input
+              name="password"
               type="password"
               id="password"
               placeholder="Password"
               onChange={(e) => setPassword(e.target.value)}
             />
             <input
+              name="email"
               type="email"
               id="email"
               placeholder="Email"
               onChange={(e) => setEmail(e.target.value)}
             />
             <input
+              name="profesion"
               type="text"
               id="profesion"
               placeholder="Profesion"

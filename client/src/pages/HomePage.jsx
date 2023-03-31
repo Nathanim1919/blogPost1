@@ -1,14 +1,19 @@
 import react from "react";
 import axios from "axios";
-import { useParams } from "react-router-dom";
+import { useParams, NavLink } from "react-router-dom";
 import { useState, useEffect } from "react";
 import styled from "styled-components";
-import { NavLink } from "react-router-dom";
 import AddPost from "../components/AddPost";
 import { BsThreeDots, BsThreeDotsVertical } from "react-icons/bs";
 import { AiOutlineLike } from "react-icons/ai";
 import { FaRegCommentDots } from "react-icons/fa";
 import { FiEdit3 } from "react-icons/fi";
+import {BiMessageRoundedDots} from 'react-icons/bi'
+import PostDetail from "./PostDetail";
+import Loading from "../components/Loading";
+import { GrLinkNext } from "react-icons/gr";
+
+
 
 export default function () {
   const [user, setUser] = useState({});
@@ -18,7 +23,10 @@ export default function () {
   const [addComment, setAddComment] = useState(false);
   const [currentPostId, setCurrentPostId] = useState(null);
   const [commentBody, setCommentBody] = useState("");
-  const [openComments, setOpenComments] = useState(false)
+  const [openComments, setOpenComments] = useState(false);
+  const [postDetail, setPostDetail] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  
   const { id } = useParams();
 
   useEffect(() => {
@@ -33,6 +41,7 @@ export default function () {
         const allPosts = await axios.get(`http://localhost:5000/posts`);
         let reverseUser = allPosts.data.reverse();
         setPosts(reverseUser);
+        setIsLoading(false)
       } catch (error) {
         console.log(error);
       }
@@ -44,35 +53,40 @@ export default function () {
     return user.following.some((u) => u._id === us._id);
   };
 
-  const followUser = async (us) => {
-    const isAlreadyFollowing = isFollowing(us);
-    const isNotCurrentUser = us._id !== user._id;
 
-    if (!isAlreadyFollowing && isNotCurrentUser) {
-      user.following.push(us);
-      us.followers.push(user);
-    } else if (isAlreadyFollowing && isNotCurrentUser) {
-      user.following = user.following.filter(
-        (followedUser) => followedUser._id !== us._id
-      );
-      us.followers = us.followers.filter(
-        (followedUser) => followedUser._id !== user._id
-      );
-    }
+const followUser = async (us) => {
+  const isAlreadyFollowing = isFollowing(us);
+  const isNotCurrentUser = us._id !== user._id;
 
-    // Create a copy of the us object without the following property
-    const usCopy = { ...us };
-    delete usCopy.following;
+  if (!isAlreadyFollowing && isNotCurrentUser) {
+    user.following.push(us);
+    us.followers.push(user);
+  } else if (isAlreadyFollowing && isNotCurrentUser) {
+    user.following = user.following.filter(
+      (followedUser) => followedUser._id !== us._id
+    );
+    us.followers = us.followers.filter(
+      (followedUser) => followedUser._id !== user._id
+    );
+  }
 
-    const [updatedUser, updatedFollowedUser] = await Promise.all([
-      axios.put(`http://localhost:5000/user/${user._id}/updateFollowing`, {
-        following: user.following,
-      }),
-      axios.put(`http://localhost:5000/user/${us._id}/updateFollowers`, {
-        followers: usCopy.followers,
-      }),
-    ]);
-  };
+  // Create a copy of the us object without the following property
+  const usCopy = { ...us };
+  delete usCopy.following;
+
+  console.log("usCopy:", usCopy);
+  console.log("usCopy.followers:", usCopy.followers);
+
+  const [updatedUser, updatedFollowedUser] = await Promise.all([
+    axios.put(`http://localhost:5000/user/${user._id}/updateFollowing`, {
+      following: user.following,
+    }),
+    axios.put(`http://localhost:5000/user/${us._id}/updateFollowers`, {
+      followers: usCopy.followers,
+    }),
+  ]);
+};
+
 
   const handleCommentSubmit = async (e) => {
     e.preventDefault();
@@ -90,7 +104,6 @@ export default function () {
 
   function handleLike(post, user) {
     const hasLiked = post.likes.some((like) => like._id === user._id);
-    console.log(hasLiked);
     if (hasLiked) {
       post.likes = post.likes.filter((like) => like._id !== user._id);
     } else {
@@ -109,8 +122,15 @@ export default function () {
       });
   }
 
+  if(isLoading){
+    return <Loading/>
+  }
+
   return (
     <>
+      {postDetail && (
+        <PostDetail postId={currentPostId} setPostDetail={setPostDetail} />
+      )}
       <Container>
         <Welcome>
           <div>
@@ -122,25 +142,50 @@ export default function () {
         </Welcome>
 
         <Timeline>
-          <UserProfileInfos>
-            <CoverPhotot>
-              <img src={user.profile} alt="" />
-            </CoverPhotot>
-            <UserProfilePhotot>
-              <img src={user.profile} alt="" />
-            </UserProfilePhotot>
-            <NavLink to={`/user/${user._id}/profile`}>
-              <FiEdit3 />
-            </NavLink>
-            <WhoiAm>
-              <h5>{user.name}</h5>
-              <p>{user.profesion}</p>
-            </WhoiAm>
-            <div>
-              <h5>Followers :- 23</h5>
-              <h5>Following :- 12</h5>
-            </div>
-          </UserProfileInfos>
+          <div>
+            <UserProfileInfos>
+              <CoverPhotot>
+                <img src={user.profile} alt="" />
+              </CoverPhotot>
+              <UserProfilePhotot>
+                <img src={user.profile} alt="" />
+              </UserProfilePhotot>
+              <NavLink to={`/user/${user._id}/profile`}>
+                <FiEdit3 />
+              </NavLink>
+              <WhoiAm>
+                <h5>{user.name}</h5>
+                <p>{user.profesion}</p>
+              </WhoiAm>
+              <div>
+                <h5>
+                  Followers :- {user.followers ? user.followers.length : ""}
+                </h5>
+                <h5>
+                  Following :- {user.following ? user.following.length : ""}
+                </h5>
+              </div>
+            </UserProfileInfos>
+
+            <StartMessaging>
+              <div>
+                <h4>Start Masseging here</h4>
+                <NavLink to={`/user/${user._id}/startchat`}>
+                  <BiMessageRoundedDots />
+                </NavLink>
+              </div>
+              <div>
+                <div>
+                  <img src={user.profile} alt="" />
+                </div>
+
+                <div>
+                  <h4>{user.name}</h4>
+                  <p>{user.profesion}</p>
+                </div>
+              </div>
+            </StartMessaging>
+          </div>
           <div>
             <AllPosts>
               {posts.map((post) => (
@@ -155,7 +200,14 @@ export default function () {
                         <h6>{post.createdBy.profesion}</h6>
                       </Info>
                     </div>
-                    <BsThreeDots />
+                    <NavLink
+                      onClick={() => {
+                        setPostDetail(true);
+                        setCurrentPostId(post._id);
+                      }}
+                    >
+                      <GrLinkNext />
+                    </NavLink>
                   </Creater>
                   <PostInfo>
                     <img src={post.photo} alt="" />
@@ -180,7 +232,7 @@ export default function () {
                       {post.comments.map((comment) => (
                         <div>
                           <p>{comment.body}</p>
-                          {/* <p>{comment.user.name}</p> */}
+                          <p>{comment.user.name}</p>
                         </div>
                       ))}
                     </Comments>
@@ -191,7 +243,7 @@ export default function () {
                       <ProfileImages>
                         <img src={user.profile} alt="" />
                       </ProfileImages>
-                      <form onSubmit={handleCommentSubmit}>
+                      <form onSubmit={(e)=>handleCommentSubmit(e)}>
                         <input
                           onChange={(e) => setCommentBody(e.target.value)}
                           type="text"
@@ -250,24 +302,74 @@ export default function () {
   );
 }
 
-const Comments = styled.div`
-    padding:2rem;
+const StartMessaging = styled.div`
+background-color: #8dcef3;
+color: white;
+box-shadow: 0 7px 15px rgba(0, 0, 0, 0.1);
+border-radius: 10px;
+margin-top:.6rem;
+padding: .51rem .51rem;
+  > div:nth-child(1) {
+    margin-bottom: 0;
+    margin-top: 0;
     display: flex;
-    flex-direction: column;
-    gap: .5rem;
-    background-color: #fffafa;
-    >div{
-      padding: 0.1rem 1rem;
-      box-shadow: 0 5px 12px rgba(0, 0, 0,.1);
-      background-color: #e6e1e1;
-      color: #333;
-      border-radius: 20px;
+    justify-content: space-between;
+    align-items: center;
+  }
+  > div:nth-child(2) {
+    margin-bottom: 0;
+    background-color: white;
+    color: #668166;
+    margin-top: 0;
+    display: flex;
+    justify-content: start;
+    gap: 1rem;
+    align-items: center;
+    padding: 0.4rem 1rem;
+    box-shadow: 0 7px 15px rgba(0, 0, 0, 0.1);
+    margin-top: 3rem;
+    border-radius: 10px;
+
+    > div:nth-child(1) {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      overflow: hidden;
+      > img {
+        width: 100%;
+      }
     }
-`
+    > div:nth-child(2) {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+
+      > * {
+        margin: 0;
+      }
+    }
+  }
+`;
+
+const Comments = styled.div`
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  background-color: #fffafa;
+  > div {
+    padding: 0.1rem 1rem;
+    box-shadow: 0 5px 12px rgba(0, 0, 0, 0.1);
+    background-color: #e6e1e1;
+    color: #333;
+    border-radius: 20px;
+  }
+`;
 
 const AllUser = styled.div`
-  height: 70vh;
+  height: 77vh;
   overflow-y: auto;
+  background-color: #eee;
 `;
 const UserInfo = styled.div`
   box-shadow: 0 8px 17px rgba(0, 0, 0, 0.01);
@@ -277,7 +379,7 @@ const UserInfo = styled.div`
   align-items: start;
   background-color: white;
   padding: 0.4rem;
-  margin: 1rem;
+  margin: 0.41rem;
   cursor: pointer;
   transition: all 0.2s ease-in-out;
   &:hover {
@@ -292,7 +394,7 @@ const UserInfo = styled.div`
   }
   > a {
     padding: 0.2rem 0.41rem;
-    background-color: blue;
+    background-color: #5aa9e6;
     color: white;
     place-self: end;
     transform: scale(0.85);
@@ -317,6 +419,10 @@ const AllPosts = styled.div`
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  >a{
+    text-decoration: none;
+    color:#333;
+  }
 `;
 const BlogPost = styled.div`
   max-width: 500px;
@@ -336,6 +442,14 @@ const Creater = styled.div`
     display: flex;
     align-items: center;
     gap: 1rem;
+  }
+  >a{
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background-color: #eee;
+    display: grid;
+    place-items: center;
   }
 `;
 const ProfileImage = styled.div`
@@ -381,7 +495,7 @@ const PostInfo = styled.div`
   > div {
     padding: 1rem;
 
-    >*{
+    > * {
       margin: 0;
     }
   }
@@ -435,6 +549,11 @@ const Timeline = styled.div`
   display: grid;
   grid-template-columns: 20% 50% 30%;
   background-color: #ffffff;
+
+  >div:nth-child(1){
+    /* background-color: #eee; */
+    padding: .5rem;
+  }
   > div:nth-child(2) {
     display: grid;
     place-items: center;
@@ -456,8 +575,8 @@ const NumberofLikes = styled.div`
   padding: 0.005rem 1rem;
   border-bottom: 1px solid #eee;
 
-  >*{
-    font-size: .8rem;
+  > * {
+    font-size: 0.8rem;
     cursor: pointer;
     color: #3b3a3a;
   }
@@ -523,11 +642,12 @@ const CoverPhotot = styled.div`
 `;
 const UserProfileInfos = styled.div`
   position: relative;
-  max-height: 300px;
+  max-height: 280px;
   border-radius: 10px;
   display: flex;
   box-shadow: 0 6px 13px rgba(0, 0, 0, 0.051);
   flex-direction: column;
+  background-color: white;
   align-items: center;
   padding: 0;
   overflow: hidden;
@@ -540,12 +660,17 @@ const UserProfileInfos = styled.div`
 const UserProfilePhotot = styled.div`
   position: absolute;
   top: 2rem;
-  width: 90px;
-  height: 90px;
+  z-index: 3;
+  width: 80px;
+  height: 80px;
   border-radius: 50%;
+  border: 5px solid white;
   overflow: hidden;
+  display: grid;
+  place-items: center;
   > img {
-    width: 100%;
+    width: 80px;
+    height: 80px;
     border-radius: 50%;
   }
 `;

@@ -4,6 +4,7 @@ const {
 const {
     Post
 } = require('../Models/post');
+
 const { Comment } = require('../Models/comment');
 
 module.exports.addPost = async (req, res) => {
@@ -140,6 +141,44 @@ module.exports.allpost = async (req, res) => {
         }); // Return 500 error if there's a server error
     }
 };
+
+module.exports.getComments = async (req, res) =>{
+    try {
+        const {
+            id
+        } = req.params
+        
+        const comments = await Comment.find({ post: id }).populate('post').populate('user');
+        // const filteredComments = comments.filter(comment => comment.post._id === id);
+     
+        res.status(200).json(comments);
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            error: 'Server error'
+        }); // Return 500 error if there's a server error
+    }
+}
+
+module.exports.getPost = async (req, res) => {
+    try {
+        const {
+            id
+        } = req.params
+        const post = await Post.findById(id)
+                                .populate('comments')
+                                .populate('createdBy')
+                                .populate('likes')
+                                res.status(200).json(post)
+    } catch (error) {
+         console.error(error);
+         return res.status(500).json({
+             error: 'Server error'
+         });
+    }
+}
+
+
 module.exports.getUser = async (req, res) => {
     try {
         const {id} = req.params; // Extract user ID from the request URL

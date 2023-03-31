@@ -20,8 +20,8 @@ const userSchema = new Schema({
     profile: {
         type: String,
     },
-    profesion:{
-        type:String,
+    profession: {
+        type: String,
     },
     blogPosts: [{
         type: Schema.Types.ObjectId,
@@ -35,12 +35,25 @@ const userSchema = new Schema({
         type: Schema.Types.ObjectId,
         ref: 'User'
     }],
+    conversations: [{
+        type: Schema.Types.ObjectId,
+        ref: 'Conversation'
+    }],
+    messages: [{
+        type: Schema.Types.ObjectId,
+        ref: 'Message'
+    }],
+    onlineStatus: {
+        type: Boolean,
+        default: false
+    },
     createdAt: {
         type: Date,
         default: Date.now,
         index: true,
     }
 })
+
 
 
 userSchema.statics.login = async function (email, password) {
