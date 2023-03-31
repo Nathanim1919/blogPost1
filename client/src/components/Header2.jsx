@@ -6,18 +6,39 @@ import { NavLink, useNavigate, useParams } from "react-router-dom";
 import { GrUserSettings } from "react-icons/gr";
 import { CgProfile } from "react-icons/cg";
 import { AiOutlineLogout } from "react-icons/ai";
+import NotificationPage from "../pages/NotificationPage";
+import axios from "axios";
 
 export default function (props) {
   const [option, setOption] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [isnotificationOpen, setNotificationOpen] = useState(false);
   const navigate = useNavigate();
+
+  const { id } = useParams();
 
   const logout = () => {
     document.cookie = "jwt=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
     window.location.href = "/login";
   };
 
+  useEffect(() => {
+    const getNotifications = async () => {
+      try {
+        const notification = await axios.get(
+          `http://localhost:5000/user/${id}/notification`
+        );
+        setNotifications(notification.data);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    getNotifications();
+  }, [id, isnotificationOpen]);
+  console.log(notifications);
   return (
     <>
+      {isnotificationOpen && <NotificationPage notifications={notifications} />}
       <Headere>
         <nav>
           <div>
@@ -27,7 +48,12 @@ export default function (props) {
           </div>
           <Profile>
             <Icons>
-              <IoMdNotificationsOutline />
+              <Counter>
+                <p>{notifications.length}</p>
+              </Counter>
+              <IoMdNotificationsOutline
+                onClick={() => setNotificationOpen(true)}
+              />
             </Icons>
             <Userprofile onClick={() => setOption(!option)}>
               <div>
@@ -72,7 +98,19 @@ export default function (props) {
     </>
   );
 }
+const Counter = styled.div`
+  position: absolute;
+  top: -1.5rem;
+  right: 0.1rem;
 
+  p {
+    display: grid;
+    place-items: center;
+    font-weight: bolder;
+    font-size: 1rem;
+    color: red;
+  }
+`;
 const Setting = styled.div`
   box-shadow: 0 12px 23px rgba(0, 0, 0, 0.1);
   max-width: 130px;
@@ -121,7 +159,9 @@ const Setting = styled.div`
     }
   }
 `;
-const Icons = styled.div``;
+const Icons = styled.div`
+  position: relative;
+`;
 const Profile = styled.div`
   display: flex;
   justify-content: center;

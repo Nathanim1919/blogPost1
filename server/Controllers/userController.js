@@ -5,7 +5,10 @@ const {
     Post
 } = require('../Models/post');
 
-const { Comment } = require('../Models/comment');
+const {
+    Comment
+} = require('../Models/comment');
+const Notification = require('../Models/notification');
 
 module.exports.addPost = async (req, res) => {
     try {
@@ -14,6 +17,7 @@ module.exports.addPost = async (req, res) => {
             description,
             Image
         } = req.body;
+
         const {
             id
         } = req.params;
@@ -61,7 +65,7 @@ module.exports.updateLikes = async (req, res) => {
 
         const updatedPost = await Post.findById(id);
         updatedPost.likes = likes;
-       
+
 
         await updatedPost.save();
 
@@ -73,42 +77,72 @@ module.exports.updateLikes = async (req, res) => {
 };
 
 module.exports.updateFollowing = async (req, res) => {
-     try {
-         const {id} = req.params;
-         const {following} = req.body;
+    try {
+        const {
+            id
+        } = req.params;
+        const {
+            following,
+            followedId
+        } = req.body;
 
-         const updatedUser = await User.findByIdAndUpdate(
-             id, {
-                 following
-             }, {
-                 new: true
-             }
-         );
+        const updatedUser = await User.findByIdAndUpdate(
+            id, {
+                following,
+            }, {
+                new: true
+            }
+        );
 
-         res.json(updatedUser);
-     } catch (error) {
-         console.error(error);
-         res.status(500).send("Error updating user's following array");
-     }
+        const notify = new Notification({
+            sender: updatedUser._id,
+            receiver: followedId,
+            type: "follow"
+        })
+
+        await notify.save();
+        res.json(updatedUser);
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("Error updating user's following array");
+    }
 };
+module.exports.getNotifications = async (req, res) => {
+    try {
+        const {
+            id
+        } = req.params;
+        const notifications = await Notification.find({
+            receiver: id
+        }).populate('receiver').populate('sender');
+        res.json(notifications);
+    } catch (error) {
+        console.log(error)
+    }
+}
+
 module.exports.updateFollowers = async (req, res) => {
-      try {
-          const {id} = req.params;
-          const {followers} = req.body;
+    try {
+        const {
+            id
+        } = req.params;
+        const {
+            followers
+        } = req.body;
 
-          const updatedUser = await User.findByIdAndUpdate(
-              id, {
-                  followers
-              }, {
-                  new: true
-              }
-          );
+        const updatedUser = await User.findByIdAndUpdate(
+            id, {
+                followers
+            }, {
+                new: true
+            }
+        );
 
-          res.json(updatedUser);
-      } catch (error) {
-          console.error(error);
-          res.status(500).send("Error updating user's followers array");
-      }
+        res.json(updatedUser);
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("Error updating user's followers array");
+    }
 };
 
 
@@ -119,7 +153,7 @@ module.exports.alluser = async (req, res) => {
             .populate('blogPosts')
             .populate('followers')
             .populate('following');
-         res.status(200).json(users); // Return the user object as JSON
+        res.status(200).json(users); // Return the user object as JSON
     } catch (error) {
         console.error(error);
         return res.status(500).json({
@@ -130,10 +164,10 @@ module.exports.alluser = async (req, res) => {
 module.exports.allpost = async (req, res) => {
     try {
         const posts = await Post.find()
-        .populate('createdBy')
-        .populate("likes")
-        .populate("comments");
-         res.status(200).json(posts); // Return the user object as JSON
+            .populate('createdBy')
+            .populate("likes")
+            .populate("comments");
+        res.status(200).json(posts); // Return the user object as JSON
     } catch (error) {
         console.error(error);
         return res.status(500).json({
@@ -142,15 +176,17 @@ module.exports.allpost = async (req, res) => {
     }
 };
 
-module.exports.getComments = async (req, res) =>{
+module.exports.getComments = async (req, res) => {
     try {
         const {
             id
         } = req.params
-        
-        const comments = await Comment.find({ post: id }).populate('post').populate('user');
+
+        const comments = await Comment.find({
+            post: id
+        }).populate('post').populate('user');
         // const filteredComments = comments.filter(comment => comment.post._id === id);
-     
+
         res.status(200).json(comments);
     } catch (error) {
         console.error(error);
@@ -166,26 +202,28 @@ module.exports.getPost = async (req, res) => {
             id
         } = req.params
         const post = await Post.findById(id)
-                                .populate('comments')
-                                .populate('createdBy')
-                                .populate('likes')
-                                res.status(200).json(post)
+            .populate('comments')
+            .populate('createdBy')
+            .populate('likes')
+        res.status(200).json(post)
     } catch (error) {
-         console.error(error);
-         return res.status(500).json({
-             error: 'Server error'
-         });
+        console.error(error);
+        return res.status(500).json({
+            error: 'Server error'
+        });
     }
 }
 
 
 module.exports.getUser = async (req, res) => {
     try {
-        const {id} = req.params; // Extract user ID from the request URL
+        const {
+            id
+        } = req.params; // Extract user ID from the request URL
         const user = await User.findById(id)
-                    .populate('blogPosts')
-                    .populate('followers')
-                    .populate('following'); // Find the user by ID using Mongoose or any other ORM
+            .populate('blogPosts')
+            .populate('followers')
+            .populate('following'); // Find the user by ID using Mongoose or any other ORM
         if (!user) {
             return res.status(404).json({
                 error: 'User not found'
@@ -208,18 +246,18 @@ module.exports.addComment = async (req, res) => {
             currentPostId
         } = req.body;
 
-         const post = await Post.findById(currentPostId);
+        const post = await Post.findById(currentPostId);
 
-         if (!post) {
-             return res.status(404).send({
-                 error: 'post not found'
-             });
-         }
+        if (!post) {
+            return res.status(404).send({
+                error: 'post not found'
+            });
+        }
 
         const comment = await Comment.create({
             body: commentBody,
             post: currentPostId,
-            user:id,
+            user: id,
         });
 
         await comment.save();
@@ -228,10 +266,10 @@ module.exports.addComment = async (req, res) => {
         await post.save();
 
         res.status(201).json({
-            message:"comment added successfully"
+            message: "comment added successfully"
         })
 
     } catch (error) {
-        
+
     }
 }

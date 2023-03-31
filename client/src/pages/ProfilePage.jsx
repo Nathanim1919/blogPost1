@@ -36,6 +36,14 @@ export default function ProfilePage() {
             <h3>{user.name}</h3>
             <p>{user.profesion}</p>
           </UserInfo>
+          <Info>
+            <p>{user.followers.length} followers</p>
+            <p>{user.following.length} following</p>
+          </Info>
+          <Buttons>
+            <NavLink>message</NavLink>
+            <NavLink>post</NavLink>
+          </Buttons>
         </ProfileUser>
 
         <Infos>
@@ -218,8 +226,8 @@ const ProfileSection = styled.div`
   grid-template-columns: 20% 80%;
 `;
 const ProfileUser = styled.div`
-  border: 1px solid black;
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
   max-width: 400px;
@@ -234,24 +242,50 @@ const ProfileImage = styled.div`
   border: 5px solid #ffffff;
   position: absolute;
   z-index: 2;
-  top: 8rem;
+  top: 7rem;
 
   > img {
     width: 100%;
   }
 `;
 const UserInfo = styled.div`
-  margin-top: 8rem;
+  margin-top: 7rem;
   display: flex;
   flex-direction: column;
   align-items: center;
-  > p {
-    color: #706d6d;
-  }
   > * {
     margin: 0;
   }
+  > p {
+    color: #494747;
+  }
 `;
+const Info = styled.div`
+ display:flex;
+ flex-direction:column;
+ margin:1rem;
+ >*{
+  margin:0;
+ }
+`
+const Buttons = styled.div`
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:2rem;
+  >*{
+    font-size:.9rem;
+    padding:.3rem .5rem;
+    text-decoration:none;
+    background-color:transparent;
+    color:blue;
+    border-radius:20px;
+    width:70px;
+    border:1px solid blue;
+    display:grid;
+    place-items:center;
+  }
+`
 const CoverImage = styled.div`
   background-color: #eee;
   width: 100%;

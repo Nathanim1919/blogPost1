@@ -26,6 +26,7 @@ export default function () {
   const [isLoading, setIsLoading] = useState(true);
   const [comments, setComments] = useState([]);
 
+
   const { id } = useParams();
 
   const getComments = async (post) => {
@@ -40,15 +41,36 @@ export default function () {
     }
   };
 
+  // get user using its unique id
   useEffect(() => {
     const getUser = async () => {
       try {
         const user = await axios.get(`http://localhost:5000/user/${id}`);
         setUser(user.data);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    getUser();
+  }, [id]);
 
+  // get all users from the database
+  useEffect(() => {
+    const getAllUsers = async () => {
+      try {
         const alluser = await axios.get(`http://localhost:5000/user`);
         setAllUsers(alluser.data);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    getAllUsers();
+  }, []);
 
+  // get all posts
+  useEffect(() => {
+    const getAllPosts = async () => {
+      try {
         const allPosts = await axios.get(`http://localhost:5000/posts`);
         let reverseUser = allPosts.data.reverse();
         setPosts(reverseUser);
@@ -57,8 +79,9 @@ export default function () {
         console.log(error);
       }
     };
-    getUser();
-  }, [id, isBox]);
+    getAllPosts();
+  }, []);
+
 
   const isFollowing = (us) => {
     return user.following.some((u) => u._id === us._id);
@@ -70,13 +93,18 @@ export default function () {
   const followUser = async (us) => {
     const isAlreadyFollowing = isFollowing(us);
     const isAlreadyFollower = isFollower(us);
-    // const isNotCurrentUser = us._id !== user._id;
+    
 
     if (!isAlreadyFollowing) {
       user.following.push(us);
-      await axios.put(`http://localhost:5000/user/${user._id}/updateFollowing`, {
-        following: user.following,
-      });
+      const followedId = us._id;
+      await axios.put(
+        `http://localhost:5000/user/${user._id}/updateFollowing`,
+        {
+          following: user.following,
+          followedId,
+        }
+      );
     } else if (isAlreadyFollowing) {
       user.following = user.following.filter(
         (followedUser) => followedUser._id !== us._id
