@@ -6,23 +6,22 @@ import Loading from "../components/Loading";
 
 export default function ProfilePage() {
   const [user, setUser] = useState({});
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(true);
+  const [displayFollowers, setDisplayFollowers] = useState(true);
   const { id } = useParams();
 
   useEffect(() => {
     const getUser = async () => {
       const Singleuser = await axios.get(`http://localhost:5000/user/${id}`);
-      console.log("data loading...");
       setUser(Singleuser.data);
-      setIsLoading(false)
+      setIsLoading(false);
     };
     getUser();
-  }, [id]);
+  }, [id, displayFollowers]);
 
-  console.log(user.blogPosts);
-
-  return (
-    isLoading? <Loading/>:
+  return isLoading ? (
+    <Loading />
+  ) : (
     <div>
       <CoverImage>
         <img src={user.profile} alt="" />
@@ -55,70 +54,163 @@ export default function ProfilePage() {
             )}
           </UserPosts>
           <Followers>
-            {user.followers ? (
-              user.followers.map((user) => (
-                <NavLink>
-                  <Post>
-                    {/* <img src={user.profile} alt="" /> */}
-                    <h1>{user.name}</h1>
-                  </Post>
-                </NavLink>
-              ))
-            ) : (
-              <p>Loading posts...</p>
-            )}
+            <Links>
+              <NavLink
+                onClick={() => setDisplayFollowers(true)}
+                activeClassName="activeLink"
+              >
+                Followers
+              </NavLink>
+              <NavLink onClick={() => setDisplayFollowers(false)}>
+                Following
+              </NavLink>
+            </Links>
+            <Friends>
+              {displayFollowers ? (
+                user.followers.map((user) => (
+                  <NavLink>
+                    <Follow>
+                      <Userinf>
+                        <div>
+                          <img src={user.profile} alt="" />
+                        </div>
+                        <div>
+                          <h4>{user.name}</h4>
+                          <p>{user.profesion}</p>
+                        </div>
+                      </Userinf>
+                      <NavLink>message</NavLink>
+                    </Follow>
+                  </NavLink>
+                ))
+              ) : user.following ? (
+                user.following.map((user) => (
+                  <NavLink>
+                    <Follow>
+                      <Userinf>
+                        <div>
+                          <img src={user.profile} alt="" />
+                        </div>
+                        <div>
+                          <h4>{user.name}</h4>
+                          <p>{user.profesion}</p>
+                        </div>
+                      </Userinf>
+                      <NavLink>message</NavLink>
+                    </Follow>
+                  </NavLink>
+                ))
+              ) : (
+                <p>Loading posts...</p>
+              )}
+            </Friends>
           </Followers>
-          <Following>
-            {user.following ? (
-              user.following.map((user) => (
-                <NavLink>
-                  <Post>
-                    {/* <img src={user.profile} alt="" /> */}
-                    <h1>{user.name}</h1>
-                  </Post>
-                </NavLink>
-              ))
-            ) : (
-              <p>Loading posts...</p>
-            )}
-          </Following>
         </Infos>
       </ProfileSection>
     </div>
   );
 }
+
+const Links = styled.div`
+  display: flex;
+  justify-content: space-between;
+  padding: 0.4rem 1rem;
+  background-color: #82abf7;
+  > * {
+    text-decoration: none;
+    color: #fffefe;
+
+    .activeLink {
+      background-color: red;
+    }
+  }
+`;
 const UserPosts = styled.div`
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  flex-wrap:wrap;
-  gap:.1rem;
-  height:70vh;
-  width:500px;
-  place-self:center;
-  padding:.4rem;
-  padding-bottom:4rem;
-  overflow:auto;
-`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.1rem;
+  height: 70vh;
+  width: 500px;
+  place-self: center;
+  padding: 0.4rem;
+  padding-bottom: 4rem;
+  overflow: auto;
+`;
+const Follow = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: .51rem;
+  border-radius: 10px;
+  padding: 0.5rem;
+  background-color:#fff;
+  box-shadow: 0 6px 13px rgba(0, 0, 0, 0.1);
+  > {
+    margin: 0;
+  }
+  h4{
+    font-size:.9rem;
+  }
+  p{
+    font-size:.7rem;
+  }
+  > a {
+    background-color: #fff;
+    color: blue;
+    border-radius: 30px;
+    padding: 0.1rem .51rem;
+    font-size:.8rem;
+    border: 2px solid blue;
+    text-decoration: none;
+  }
+`;
 const Post = styled.div`
-  width:400px;
-  margin-bottom:1rem;
-  border-radius:10px;
-  overflow:hidden;
-  box-shadow: 0 6px 13px rgba(0,0,0,.1);
-  >{
+  align-items:center;
+  margin-bottom: 1rem;
+  border-radius: 10px;
+  overflow: hidden;
+  padding:.5rem;
+  box-shadow: 0 6px 13px rgba(0, 0, 0, 0.1);
+  > {
     margin: 0;
   }
 
-  h1{
-    font-size: .9rem;
+
+  h1 {
+    font-size: 0.9rem;
     font-weight: 400;
     padding: 1rem;
     margin-bottom: 0;
   }
-  >img{
-    width:100%;
-    height:300px;
+  > img {
+    width: 100%;
+    height: 300px;
+  }
+`;
+const Userinf = styled.div`
+  display:flex;
+  align-items: center;
+  gap:1rem;
+
+  >div:nth-child(1){
+    width:50px;
+    height:50px;
+    border-radius:50%;
+    overflow:hidden;
+
+    >img{
+      width:100%;
+    }
+  }
+  >div:nth-child(2){
+    display:flex;
+    flex-direction:column;
+
+    >*{
+      margin:0;
+    }
   }
 `
 const ProfileSection = styled.div`
@@ -131,7 +223,7 @@ const ProfileUser = styled.div`
   justify-content: center;
   align-items: center;
   max-width: 400px;
-  max-height:250px;
+  max-height: 250px;
 `;
 
 const ProfileImage = styled.div`
@@ -173,13 +265,23 @@ const CoverImage = styled.div`
 
 const Infos = styled.div`
   padding: 1rem;
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 50% 50%;
 `;
-
+const Friends = styled.div`
+  background-color:#fcfafa;
+  height:65vh;
+  overflow:scroll;
+  >*{
+    background-color:white;
+    text-decoration:none;
+  }
+`
 const Followers = styled.div`
-  background-color: red;
+  background-color: #fcf9f9;
+  padding: 1rem;
+
 `;
 const Following = styled.div`
-  background-color:red;
-`
+  background-color: red;
+`;

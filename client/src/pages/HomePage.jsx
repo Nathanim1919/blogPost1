@@ -63,38 +63,36 @@ export default function () {
   const isFollowing = (us) => {
     return user.following.some((u) => u._id === us._id);
   };
+  const isFollower = (us) => {
+    return us.followers.some((u) => u._id === user._id);
+  };
 
   const followUser = async (us) => {
     const isAlreadyFollowing = isFollowing(us);
-    const isNotCurrentUser = us._id !== user._id;
+    const isAlreadyFollower = isFollower(us);
+    // const isNotCurrentUser = us._id !== user._id;
 
-    if (!isAlreadyFollowing && isNotCurrentUser) {
+    if (!isAlreadyFollowing) {
       user.following.push(us);
-      us.followers.push(user);
-    } else if (isAlreadyFollowing && isNotCurrentUser) {
+      await axios.put(`http://localhost:5000/user/${user._id}/updateFollowing`, {
+        following: user.following,
+      });
+    } else if (isAlreadyFollowing) {
       user.following = user.following.filter(
         (followedUser) => followedUser._id !== us._id
       );
+    }
+    
+    if (!isAlreadyFollower) {
+      us.followers.push(user);
+      await axios.put(`http://localhost:5000/user/${us._id}/updateFollowers`, {
+        followers: us.followers,
+      });
+    } else if (isAlreadyFollower) {
       us.followers = us.followers.filter(
         (followedUser) => followedUser._id !== user._id
       );
     }
-
-    // Create a copy of the us object without the following property
-    const usCopy = { ...us };
-    delete usCopy.following;
-
-    console.log("usCopy:", usCopy);
-    console.log("usCopy.followers:", usCopy.followers);
-
-    const [updatedUser, updatedFollowedUser] = await Promise.all([
-      axios.put(`http://localhost:5000/user/${user._id}/updateFollowing`, {
-        following: user.following,
-      }),
-      axios.put(`http://localhost:5000/user/${us._id}/updateFollowers`, {
-        followers: usCopy.followers,
-      }),
-    ]);
   };
 
   const handleCommentSubmit = async (e) => {
@@ -373,23 +371,25 @@ const StartMessaging = styled.div`
 
 const Comments = styled.div`
   display: grid;
-  padding: .51rem;
+  padding: 0.51rem;
   background-color: #f3f0f0;
-  gap:1rem;
+  gap: 1rem;
 `;
 const Comment = styled.div`
   display: flex;
   padding: 0.41rem;
   flex-direction: column;
   background-color: #ffffff;
-  box-shadow: 0 6px 13px rgba(0, 0, 0, 0.2) > * {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+  > * {
     margin: 0;
   }
-  > div:nth-child(2){
-    color:#585656;
-    font-size:.71rem;
+  > div:nth-child(2) {
+    color: #585656;
+    font-size: 0.71rem;
   }
-   > div:nth-child(1) {
+  > div:nth-child(1) {
     display: flex;
     justify-content: flex-start;
     align-items: center;
@@ -408,7 +408,14 @@ const Comment = styled.div`
     > div:nth-child(2) {
       display: flex;
       flex-direction: column;
-      align-items: center;
+      align-items: start;
+
+      > h4 {
+        font-size: 0.9rem;
+      }
+      > p {
+        font-size: 0.8rem;
+      }
 
       > * {
         margin: 0;
