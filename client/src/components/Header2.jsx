@@ -35,10 +35,15 @@ export default function (props) {
     };
     getNotifications();
   }, [id, isnotificationOpen]);
-  console.log(notifications);
+
   return (
     <>
-      {isnotificationOpen && <NotificationPage notifications={notifications} />}
+      {isnotificationOpen && (
+        <NotificationPage
+          notifications={notifications}
+          setNotificationOpen={setNotificationOpen}
+        />
+      )}
       <Headere>
         <nav>
           <div>
@@ -51,9 +56,11 @@ export default function (props) {
               <Counter>
                 <p>{notifications.length}</p>
               </Counter>
+              <NavLink>
               <IoMdNotificationsOutline
                 onClick={() => setNotificationOpen(true)}
               />
+              </NavLink>
             </Icons>
             <Userprofile onClick={() => setOption(!option)}>
               <div>
@@ -161,6 +168,16 @@ const Setting = styled.div`
 `;
 const Icons = styled.div`
   position: relative;
+
+  >a{
+    font-size:1.7rem;
+    cursor:pointer;
+
+    &:hover{
+      color:#636060;
+    }
+  }
+  
 `;
 const Profile = styled.div`
   display: flex;
