@@ -12,13 +12,14 @@ export default function PostDetail(props) {
   useEffect(() => {
     const fetchPost = async () => {
       try {
+        
         // fetch the information of the target post
         const { data } = await axios.get(
           `http://localhost:5000/posts/${props.postId}`
         );
         setPost(data);
 
-        // fetch comments which are speific to this post
+        // fetch comments which are specific to this post
         const id = props.postId;
         const comment = await axios.get(
           `http://localhost:5000/posts/${id}/comments`

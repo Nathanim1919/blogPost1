@@ -8,12 +8,10 @@ import { BsThreeDots, BsThreeDotsVertical } from "react-icons/bs";
 import { AiOutlineLike } from "react-icons/ai";
 import { FaRegCommentDots } from "react-icons/fa";
 import { FiEdit3 } from "react-icons/fi";
-import {BiMessageRoundedDots} from 'react-icons/bi'
+import { BiMessageRoundedDots } from "react-icons/bi";
 import PostDetail from "./PostDetail";
 import Loading from "../components/Loading";
 import { GrLinkNext } from "react-icons/gr";
-
-
 
 export default function () {
   const [user, setUser] = useState({});
@@ -26,8 +24,21 @@ export default function () {
   const [openComments, setOpenComments] = useState(false);
   const [postDetail, setPostDetail] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  
+  const [comments, setComments] = useState([]);
+
   const { id } = useParams();
+
+  const getComments = async (post) => {
+    try {
+      const comment = await axios.get(
+        `http://localhost:5000/posts/${post._id}/comments`
+      );
+      setComments(comment.data);
+      console.log(comments);
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   useEffect(() => {
     const getUser = async () => {
@@ -41,7 +52,7 @@ export default function () {
         const allPosts = await axios.get(`http://localhost:5000/posts`);
         let reverseUser = allPosts.data.reverse();
         setPosts(reverseUser);
-        setIsLoading(false)
+        setIsLoading(false);
       } catch (error) {
         console.log(error);
       }
@@ -53,40 +64,38 @@ export default function () {
     return user.following.some((u) => u._id === us._id);
   };
 
+  const followUser = async (us) => {
+    const isAlreadyFollowing = isFollowing(us);
+    const isNotCurrentUser = us._id !== user._id;
 
-const followUser = async (us) => {
-  const isAlreadyFollowing = isFollowing(us);
-  const isNotCurrentUser = us._id !== user._id;
+    if (!isAlreadyFollowing && isNotCurrentUser) {
+      user.following.push(us);
+      us.followers.push(user);
+    } else if (isAlreadyFollowing && isNotCurrentUser) {
+      user.following = user.following.filter(
+        (followedUser) => followedUser._id !== us._id
+      );
+      us.followers = us.followers.filter(
+        (followedUser) => followedUser._id !== user._id
+      );
+    }
 
-  if (!isAlreadyFollowing && isNotCurrentUser) {
-    user.following.push(us);
-    us.followers.push(user);
-  } else if (isAlreadyFollowing && isNotCurrentUser) {
-    user.following = user.following.filter(
-      (followedUser) => followedUser._id !== us._id
-    );
-    us.followers = us.followers.filter(
-      (followedUser) => followedUser._id !== user._id
-    );
-  }
+    // Create a copy of the us object without the following property
+    const usCopy = { ...us };
+    delete usCopy.following;
 
-  // Create a copy of the us object without the following property
-  const usCopy = { ...us };
-  delete usCopy.following;
+    console.log("usCopy:", usCopy);
+    console.log("usCopy.followers:", usCopy.followers);
 
-  console.log("usCopy:", usCopy);
-  console.log("usCopy.followers:", usCopy.followers);
-
-  const [updatedUser, updatedFollowedUser] = await Promise.all([
-    axios.put(`http://localhost:5000/user/${user._id}/updateFollowing`, {
-      following: user.following,
-    }),
-    axios.put(`http://localhost:5000/user/${us._id}/updateFollowers`, {
-      followers: usCopy.followers,
-    }),
-  ]);
-};
-
+    const [updatedUser, updatedFollowedUser] = await Promise.all([
+      axios.put(`http://localhost:5000/user/${user._id}/updateFollowing`, {
+        following: user.following,
+      }),
+      axios.put(`http://localhost:5000/user/${us._id}/updateFollowers`, {
+        followers: usCopy.followers,
+      }),
+    ]);
+  };
 
   const handleCommentSubmit = async (e) => {
     e.preventDefault();
@@ -122,8 +131,8 @@ const followUser = async (us) => {
       });
   }
 
-  if(isLoading){
-    return <Loading/>
+  if (isLoading) {
+    return <Loading />;
   }
 
   return (
@@ -222,6 +231,7 @@ const followUser = async (us) => {
                       onClick={() => {
                         setOpenComments(!openComments);
                         setCurrentPostId(post._id);
+                        getComments(post);
                       }}
                     >
                       {post.comments.length} Comments
@@ -229,11 +239,21 @@ const followUser = async (us) => {
                   </NumberofLikes>
                   {currentPostId === post._id && openComments && (
                     <Comments>
-                      {post.comments.map((comment) => (
-                        <div>
-                          <p>{comment.body}</p>
-                          <p>{comment.user.name}</p>
-                        </div>
+                      {comments.map((comment) => (
+                        <Comment>
+                          <div>
+                            <div>
+                              <img src={comment.user.profile} alt="" />
+                            </div>
+                            <div>
+                              <h4>{comment.user.name}</h4>
+                              <p>{comment.user.profesion}</p>
+                            </div>
+                          </div>
+                          <div>
+                            <p>{comment.body}</p>
+                          </div>
+                        </Comment>
                       ))}
                     </Comments>
                   )}
@@ -243,7 +263,7 @@ const followUser = async (us) => {
                       <ProfileImages>
                         <img src={user.profile} alt="" />
                       </ProfileImages>
-                      <form onSubmit={(e)=>handleCommentSubmit(e)}>
+                      <form onSubmit={(e) => handleCommentSubmit(e)}>
                         <input
                           onChange={(e) => setCommentBody(e.target.value)}
                           type="text"
@@ -303,12 +323,12 @@ const followUser = async (us) => {
 }
 
 const StartMessaging = styled.div`
-background-color: #8dcef3;
-color: white;
-box-shadow: 0 7px 15px rgba(0, 0, 0, 0.1);
-border-radius: 10px;
-margin-top:.6rem;
-padding: .51rem .51rem;
+  background-color: #8dcef3;
+  color: white;
+  box-shadow: 0 7px 15px rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+  margin-top: 0.6rem;
+  padding: 0.51rem 0.51rem;
   > div:nth-child(1) {
     margin-bottom: 0;
     margin-top: 0;
@@ -352,20 +372,50 @@ padding: .51rem .51rem;
 `;
 
 const Comments = styled.div`
-  padding: 2rem;
+  display: grid;
+  padding: .51rem;
+  background-color: #f3f0f0;
+  gap:1rem;
+`;
+const Comment = styled.div`
   display: flex;
+  padding: 0.41rem;
   flex-direction: column;
-  gap: 0.5rem;
-  background-color: #fffafa;
-  > div {
-    padding: 0.1rem 1rem;
-    box-shadow: 0 5px 12px rgba(0, 0, 0, 0.1);
-    background-color: #e6e1e1;
-    color: #333;
-    border-radius: 20px;
+  background-color: #ffffff;
+  box-shadow: 0 6px 13px rgba(0, 0, 0, 0.2) > * {
+    margin: 0;
+  }
+  > div:nth-child(2){
+    color:#585656;
+    font-size:.71rem;
+  }
+   > div:nth-child(1) {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 1rem;
+
+    > div:nth-child(1) {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      overflow: hidden;
+
+      > img {
+        width: 100%;
+      }
+    }
+    > div:nth-child(2) {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+
+      > * {
+        margin: 0;
+      }
+    }
   }
 `;
-
 const AllUser = styled.div`
   height: 77vh;
   overflow-y: auto;
@@ -419,9 +469,9 @@ const AllPosts = styled.div`
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  >a{
+  > a {
     text-decoration: none;
-    color:#333;
+    color: #333;
   }
 `;
 const BlogPost = styled.div`
@@ -443,7 +493,7 @@ const Creater = styled.div`
     align-items: center;
     gap: 1rem;
   }
-  >a{
+  > a {
     width: 30px;
     height: 30px;
     border-radius: 50%;
@@ -550,9 +600,9 @@ const Timeline = styled.div`
   grid-template-columns: 20% 50% 30%;
   background-color: #ffffff;
 
-  >div:nth-child(1){
+  > div:nth-child(1) {
     /* background-color: #eee; */
-    padding: .5rem;
+    padding: 0.5rem;
   }
   > div:nth-child(2) {
     display: grid;
