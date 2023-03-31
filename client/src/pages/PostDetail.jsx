@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import { AiOutlineClose } from "react-icons/ai";
-import { NavLink } from "react-router-dom";
+import { NavLink, useParams } from "react-router-dom";
 import axios from "axios";
 
 export default function PostDetail(props) {
   const [post, setPost] = useState({});
   const [comments, setComments] = useState([]);
+  const [commentBody, setComment] = useState("");
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -29,7 +30,25 @@ export default function PostDetail(props) {
     };
 
     fetchPost();
-  }, [props.postId]);
+  }, [props.postId, comments]);
+
+
+  // add comment
+  const {id} = useParams();
+  const currentPostId = props.postId;
+
+   const handleCommentSubmit = async (e) => {
+     e.preventDefault();
+     try {
+       const comment = await axios.post(`http://localhost:5000/posts/comment`, {
+         commentBody,
+         id,
+         currentPostId,
+       });
+     } catch (error) {
+       console.log(error);
+     }
+   };
 
   return (
     post &&
@@ -87,8 +106,12 @@ export default function PostDetail(props) {
               )}
             </div>
             <WriteComment>
-              <form>
-                <input type="text" placeholder="add comment..." />
+              <form onSubmit={(e) => handleCommentSubmit(e)}>
+                <input
+                  type="text"
+                  placeholder="add comment..."
+                  onChange={(e) => setComment(e.target.value)}
+                />
                 <button type="submit">post</button>
               </form>
             </WriteComment>
@@ -99,9 +122,9 @@ export default function PostDetail(props) {
   );
 }
 const Infos = styled.div`
-position: relative;
-top: 4rem;
-`
+  position: relative;
+  top: 4rem;
+`;
 const EmptyComment = styled.div`
   background-color: transparent;
   position: relative;
